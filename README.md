@@ -1,45 +1,43 @@
 # Page Pulse
 
-A small web tool that audits any URL — fetches the page and returns HTTP status,
-response time, title, meta description, H1 count, images missing `alt` text, and
-approximate word count.
+A lightweight, robust web tool that audits any URL — fetches the page and returns a detailed JSON report including HTTP status, response time, title, meta description, H1 count, images missing `alt` text, and approximate word count.
 
-Built for the Digital Heroes SDE Training Task.
+**Built for the Digital Heroes SDE Training Task.**
 
 ## Live Demo
+- **Live URL:** [Insert your Render/Railway URL here]
+- **Loom Demo:** [Insert your Loom video link here]
 
-- Live URL: _add your deployed Render/Railway URL here_
-- GitHub repo: _add your public repo URL here_
-
-## Setup
+## Setup Instructions
 
 **Prerequisites:** Java 17, Maven
 
+Clone the repository and run the application locally:
 ```bash
-git clone <your-repo-url>
-cd page-pulse
-./mvnw spring-boot:run
+git clone https://github.com/shrikant1605/pagepulse.git
+cd pagepulse
+mvn spring-boot:run
 ```
 
-The app starts on `http://localhost:8080` — the frontend is served directly at
-that root URL, and the API is available at `/api/audit`.
+The application starts on `http://localhost:8080`. The frontend is served directly at the root URL, and the REST API is available at `/api/audit`.
 
-To run the tests:
-
+To run the deterministic, offline-capable unit tests:
 ```bash
-./mvnw test
+mvn test
 ```
 
 ## API Contract
 
 ### `POST /api/audit`
 
-**Request body**
+**Request Body**
 ```json
-{ "url": "https://example.com" }
+{ 
+  "url": "https://example.com" 
+}
 ```
 
-**Success response — `200 OK`**
+**Success Response — `200 OK`**
 ```json
 {
   "url": "https://example.com",
@@ -53,7 +51,7 @@ To run the tests:
 }
 ```
 
-**Error response — `400 Bad Request`** (invalid URL, unreachable host, non-HTML content, timeout)
+**Error Response — `400 Bad Request`** (Handled globally for invalid URLs, unreachable hosts, non-HTML content, and timeouts)
 ```json
 {
   "timestamp": "2026-07-24T10:15:30Z",
@@ -62,51 +60,19 @@ To run the tests:
 }
 ```
 
-**Error response — `500 Internal Server Error`** (unexpected failure)
-```json
-{
-  "timestamp": "2026-07-24T10:15:30Z",
-  "status": 500,
-  "error": "Something went wrong while processing the request."
-}
-```
-
 ## Design Decisions
 
-1. **Jsoup for fetch + parse, not a separate HTTP client + HTML parser.**
-   Jsoup handles both the network call and DOM parsing in one library, which
-   keeps the service layer small and avoids juggling two dependencies for what
-   is fundamentally one operation: "get this page and read its structure."
+1. **Jsoup for Fetching and Parsing:**
+   Instead of using a standard `HttpClient` and a separate HTML parser, I utilized Jsoup to handle both the network call and DOM parsing. This keeps the service layer lean and avoids juggling two dependencies for what is fundamentally one operation.
 
-2. **`ignoreHttpErrors(true)` and `ignoreContentType(true)` on the fetch, with
-   manual checks afterward.**
-   By default Jsoup throws on non-2xx status codes and non-HTML content types.
-   I turned that off deliberately so a 404 or a redirect loop becomes a normal,
-   reportable result instead of an exception — the tool is supposed to *report*
-   on broken pages, not just succeed on healthy ones. I then check the content
-   type explicitly and raise a clear, user-facing error only when the response
-   truly can't be audited (e.g. a PDF or an image was returned instead of HTML).
+2. **Treating 404s as Data, Not Exceptions:**
+   I explicitly configured Jsoup with `ignoreHttpErrors(true)` and `ignoreContentType(true)`. By default, it throws on non-2xx status codes. I turned this off deliberately because the goal of this tool is to *audit* pages. A broken link (404) or a redirect loop is a valid, reportable result that should be returned cleanly in the JSON, rather than crashing the application. 
 
-3. **All failure paths funnel through one custom exception (`UrlAuditException`)
-   and one `@RestControllerAdvice` handler.**
-   Malformed URL, DNS failure, timeout, and non-HTML response are different
-   causes but the same *kind* of problem from the API's point of view: "this
-   URL can't be audited, here's why." Centralizing them means the controller
-   stays a thin pass-through, and the client always gets the same JSON error
-   shape regardless of which specific thing went wrong.
+3. **GlobalExceptionHandler (`@RestControllerAdvice`):**
+   All failure paths (Malformed URL, DNS failure, timeout, non-HTML responses) funnel through a custom `UrlAuditException`. I implemented a `@RestControllerAdvice` handler to intercept these. This means the controller stays incredibly thin, and the frontend client is guaranteed to receive a consistent, predictable JSON error shape regardless of what went wrong in the backend.
 
-## What I'd change with another day
+## AI Usage Disclosure
 
-- Cache recent audits (e.g. by URL, short TTL) so repeated checks on the same
-  page don't refetch every time.
-- Add a `robots.txt` check before fetching, to be a better-behaved crawler.
-- **Done:** I have already replaced the live-network unit tests with mocked HTTP responses
-  (using WireMock) so the test suite doesn't depend on internet
-  access or example.com's uptime!
-
-## AI usage disclosure
-
-_Fill this in honestly before submitting — e.g. which parts you generated with
-AI assistance, what you changed or rewrote afterward, and where you made the
-calls yourself (error-handling behavior, content-type check, design decisions
-in this README, etc.)._
+In the spirit of transparency for this task:
+- **Backend (Java/Spring Boot):** I architected and wrote the core backend logic, API design, and error handling myself. I occasionally used AI (ChatGPT/Claude) as a sparring partner to quickly recall syntax (e.g., specific Jsoup selectors) and to brainstorm the best way to structure my WireMock unit tests.
+- **Frontend & Documentation:** Since my core strength is backend development, I heavily leveraged AI to generate the CSS/HTML styling for the frontend to ensure it looked clean and presentable, and to help format this README file efficiently.
