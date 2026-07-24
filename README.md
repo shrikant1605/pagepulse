@@ -5,8 +5,8 @@ A lightweight, robust web tool that audits any URL — fetches the page and retu
 **Built for the Digital Heroes SDE Training Task.**
 
 ## Live Demo
-- **Live URL:** [Insert your Render/Railway URL here]
-- **Loom Demo:** [Insert your Loom video link here]
+- **Live URL:** https://pagepulse-7w78.onrender.com/
+- **Loom Demo:** 
 
 ## Setup Instructions
 
