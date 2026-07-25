@@ -6,7 +6,7 @@ A lightweight, robust web tool that audits any URL — fetches the page and retu
 
 ## Live Demo
 - **Live URL:** https://pagepulse-7w78.onrender.com/
-- **Loom Demo:** 
+- **Loom Demo:** https://drive.google.com/file/d/1F35lxV78_a91nTvhm8XGdl_MUsdll8_Z/view?usp=sharing
 
 ## Setup Instructions
 
